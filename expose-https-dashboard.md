@@ -16,10 +16,10 @@
     Which should look like this
     ```
     spec:
-    smm:
-      exposeDashboard:
-        meshGateway:
-          enabled: true
+      smm:
+        exposeDashboard:
+          meshGateway:
+            enabled: true
     ```
 
 1. reconcile
