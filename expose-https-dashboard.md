@@ -5,21 +5,21 @@
 
     Below two lines already exists
     spec:
-    smm:
+      smm:
 
     Just add these
-        exposeDashboard:
+      exposeDashboard:
         meshGateway:
-            enabled: true
+          enabled: true
     ```
 
     Which should look like this
     ```
     spec:
     smm:
-        exposeDashboard:
+      exposeDashboard:
         meshGateway:
-            enabled: true
+          enabled: true
     ```
 
 1. reconcile
