@@ -1,6 +1,6 @@
+## Steps to expose Cisco SMM dashboard
 
-1. 
-    ```
+1.  ```
     kubectl edit controlplanes.smm.cisco.com smm
 
     Below two lines already exists
