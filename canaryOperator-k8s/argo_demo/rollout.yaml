@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: rollouts-demo
+spec:
+  replicas: 1
+  strategy:
+    canary:
+      analysis:
+        templates:
+          - templateName: success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: rollouts-demo-stable.default.svc.cluster.local
+      canaryService: rollouts-demo-canary
+      stableService: rollouts-demo-stable
+      trafficRouting:
+        istio:
+          virtualServices:
+          - name: rollouts-demo-vsvc1 # At least one virtualService is required
+            routes:
+            - primary # At least one route is required
+          - name: rollouts-demo-vsvc2
+            routes:
+            - secondary # At least one route is required
+      steps:
+      - setWeight: 10
+      - pause: {duration: 10s}
+      - setWeight: 20
+      - pause: {duration: 10s}
+      - setWeight: 30
+      - pause: {duration: 10s}
+      - setWeight: 40
+      - pause: {duration: 10s}
+      - setWeight: 50
+      - pause: {duration: 10s}
+      - setWeight: 60
+      - pause: {duration: 10s}
+      - setWeight: 70
+      - pause: {duration: 10s}
+      - setWeight: 80
+      - pause: {duration: 10s}
+      - setWeight: 90
+      - pause: {duration: 10s}
+      - setWeight: 100
+      - pause: {duration: 10s}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: rollouts-demo
+  template:
+    metadata:
+      labels:
+        app: rollouts-demo
+        istio-injection: enabled
+    spec:
+      containers:
+      - name: rollouts-demo
+        image: argoproj/rollouts-demo:blue
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            memory: 32Mi
+            cpu: 5m
