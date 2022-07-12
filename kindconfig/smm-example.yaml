@@ -1,0 +1,94 @@
+global:
+  ecr:
+    enabled: false
+  basicAuth:
+    username: ""
+    password: ""
+
+crd:
+  manage: true
+
+demoApplication:
+  enabled: false
+
+controlPlane:
+  enabled: true
+  spec:
+    repositoryOverride:
+      host: registry.eticloud.io
+      prefix: smm
+    smm:
+      als:
+        image:
+          repository: registry.eticloud.io/smm/smm-als
+      application:
+        image:
+          repository: registry.eticloud.io/smm/smm
+      auth:
+        image:
+          repository: registry.eticloud.io/smm/smm-authentication
+      federationGateway:
+        image:
+          repository: registry.eticloud.io/smm/smm-federation-gateway
+      federationGatewayOperator:
+        image:
+          repository: registry.eticloud.io/smm/smm-federation-gateway-operator
+      health:
+        api:
+          image:
+            repository: registry.eticloud.io/smm/smm-health-api
+        controller:
+          image:
+            repository: registry.eticloud.io/smm/smm-health
+      leo:
+        image:
+          repository: registry.eticloud.io/smm/smm-leo
+      prometheusOperator:
+        k8sproxy:
+          image:
+            repository: registry.eticloud.io/smm/k8s-proxy
+      sre:
+        alertExporter:
+          image:
+            repository: registry.eticloud.io/smm/smm-sre-alert-exporter
+        api:
+          image:
+            repository: registry.eticloud.io/smm/smm-sre-api
+        controller:
+          image:
+            repository: registry.eticloud.io/smm/smm-sre
+      web:
+        image:
+          repository: registry.eticloud.io/smm/smm-web
+        downloads:
+          image:
+            repository: registry.eticloud.io/smm/smm-cli
+      vmIntegration:
+        image:
+          repository: registry.eticloud.io/smm/smm-vm-integration
+    clusterRegistry:
+      image:
+        repository: registry.eticloud.io/smm/cluster-registry-controller
+    meshManager:
+      image:
+        repository: registry.eticloud.io/smm/smm-mesh-manager
+      istio:
+        sidecarInjector:
+          image:
+            repository: registry.eticloud.io/smm/istio-sidecar-injector
+        initCNIConfiguration:
+          image:
+            repository: registry.eticloud.io/smm/istio-install-cni
+        pilot:
+          image:
+            repository: registry.eticloud.io/smm/istio-pilot
+        proxy:
+          image:
+            repository: registry.eticloud.io/smm/istio-proxyv2
+
+license:
+  enabled: true
+  name: smm-license
+  spec:
+    type: jwt
+    raw: ""

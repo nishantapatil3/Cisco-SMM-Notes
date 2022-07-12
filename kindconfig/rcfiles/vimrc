@@ -1,0 +1,9 @@
+set expandtab ts=4 sw=4 ai
+set hlsearch
+set ci
+syntax on
+colorscheme desert
+set nu
+set paste
+set ruler
+set incsearch

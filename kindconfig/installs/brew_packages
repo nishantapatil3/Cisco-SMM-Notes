@@ -1,0 +1,17 @@
+brew install go
+brew install k9s
+brew install kubectl
+brew install romkatv/powerlevel10k/powerlevel10k\necho "source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme" >>~/.zshrc
+brew install goimports
+brew install aws
+brew install awscli
+brew install wget
+brew install npm
+brew install yarn
+brew install watch
+brew install gh
+brew install golangci-lint
+brew install vnstat
+brew install helm
+brew install kind
+
