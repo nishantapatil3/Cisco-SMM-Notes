@@ -1,7 +1,7 @@
 #!/bin/sh
 
-KINDCONFIG="$HOME/kindconfig/config.yaml"
-KUBECONFIG="$HOME/kindconfig/kind-1.kubeconfig"
+KINDCONFIG="$HOME/kindconfig/kind/kind_config.yaml"
+KUBECONFIG="$HOME/Downloads/kind-1.yaml"
 
 kind create cluster --config $KINDCONFIG
 kind get kubeconfig --name kind-1 > $KUBECONFIG
