@@ -39,15 +39,17 @@
     ```
     kubectl edit controlplanes.smm.cisco.com smm
 
-    exposeDashboard:
-      meshGateway:
-        enabled: true
-        tls:
-          enabled: true
-          letsEncrypt:
-            dnsNames:
-              - 34.127.124.68.nip.io
+    spec:
+      smm:
+        exposeDashboard:
+          meshGateway:
             enabled: true
+            tls:
+              enabled: true
+              letsEncrypt:
+                dnsNames:
+                  - 34.127.124.68.nip.io
+                enabled: true
     ```
 
 1. Reconcile
