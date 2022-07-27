@@ -3,5 +3,4 @@ kind: Simple
 metadata:
   name: k3d-1
 servers: 1
-agents: 2
 image: rancher/k3s:v1.22.9-k3s1
