@@ -6,7 +6,7 @@ global:
     password: ""
 
 crd:
-  manage: true
+  manage: false
 
 demoApplication:
   enabled: false
@@ -25,6 +25,7 @@ controlPlane:
         image:
           repository: registry.eticloud.io/smm/smm
       auth:
+        mode: impersonation
         image:
           repository: registry.eticloud.io/smm/smm-authentication
       federationGateway:
@@ -68,7 +69,7 @@ controlPlane:
           repository: registry.eticloud.io/smm/smm-vm-integration
     clusterRegistry:
       image:
-        repository: registry.eticloud.io/smm/cluster-registry-controller
+        repository: ghcr.io/cisco-open/cluster-registry-controller
     meshManager:
       image:
         repository: registry.eticloud.io/smm/smm-mesh-manager
@@ -87,7 +88,7 @@ controlPlane:
             repository: registry.eticloud.io/smm/istio-proxyv2
 
 license:
-  enabled: true
+  enabled: false
   name: smm-license
   spec:
     type: jwt
