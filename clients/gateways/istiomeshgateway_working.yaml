@@ -1,0 +1,30 @@
+apiVersion: servicemesh.cisco.com/v1alpha1
+kind: IstioMeshGateway
+metadata:
+  annotations:
+    banzaicloud.io/related-to: istio-system/cp-v112x
+  labels:
+    app: nsp-gw
+    istio.io/rev: cp-v112x.istio-system
+  name: nsp-gw-cp-v112x
+spec:
+  deployment:
+    podMetadata:
+      labels:
+        app: nsp-gw
+        istio: ingressgateway
+  istioControlPlane:
+    name: cp-v112x
+    namespace: istio-system
+  service:
+    ports:
+      - name: http
+        port: 80
+        protocol: TCP
+        targetPort: 8080
+      - name: https
+        port: 443
+        protocol: TCP
+        targetPort: 8443
+    type: LoadBalancer
+  type: ingress

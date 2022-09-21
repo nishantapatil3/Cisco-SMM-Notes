@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: public-gateway
+  namespace: test
+spec:
+  selector:
+    app: test-imgw-app
+    gateway-name: test-imgw
+    gateway-type: ingress
+    istio.io/rev: cp-v112x.istio-system
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"

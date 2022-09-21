@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "kali-client"
+spec:
+  selector:
+    matchLabels:
+      networkservicemesh.io/app: "kali-client"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        networkservicemesh.io/app: "kali-client"
+    spec:
+      containers:
+        - name: kali
+          image: praqma/network-multitool:latest
+          command: ["/bin/sleep","infinity"]
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"

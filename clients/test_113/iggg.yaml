@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: backyards-leo
+    nginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0,::/0
+  generateName: cm-acme-http-solver-
+  generation: 1
+  labels:
+    acme.cert-manager.io/http-domain: "893715902"
+    acme.cert-manager.io/http-token: "1026756340"
+    acme.cert-manager.io/http01-solver: "true"
+  name: cm-acme-http-solver-4d48c
+  namespace: smm-demo
+spec:
+  rules:
+  - host: 35.197.0.155.sslip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: cm-acme-http-solver-k6lp4
+            port:
+              number: 8089
+        path: /.well-known/acme-challenge/Al70M-pJzwTCU-Q_KYcpquoTMLxVcbx-8Vyhc5uqPzI
+        pathType: ImplementationSpecific
