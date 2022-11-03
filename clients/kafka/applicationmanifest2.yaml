@@ -1,0 +1,84 @@
+apiVersion: supertubes.banzaicloud.io/v1beta1
+kind: ApplicationManifest
+metadata:
+  name: applicationmanifest
+  namespace: default
+spec:
+  clusterRegistry:
+    enabled: false
+    namespace: cluster-registry
+  controllerSettings: {}
+  csrOperator:
+    enabled: true
+    namespace: csr-operator-system
+  imagePullSecretsOperator:
+    enabled: true
+    namespace: supertubes-system
+  istioOperator:
+    enabled: true
+    namespace: istio-system
+  kafkaMinion:
+    enabled: true
+  kafkaOperator:
+    enabled: true
+    namespace: kafka
+  monitoring:
+    grafanaDashboards:
+      enabled: true
+      label: app.kubernetes.io/supertubes_managed_grafana_dashboard
+    prometheusOperator:
+      enabled: true
+      namespace: supertubes-system
+  supertubes:
+    enabled: true
+    namespace: supertubes-system
+    valuesOverride: |-
+      ingress:
+        istio:
+          create: true
+          meshgateway:
+            istioControlPlane:
+              namespace: istio-system
+              name: sdm-icp-v115x # REPLACE WITH THE NAME OF THE EXISTING ISTIOCONTROLPLANE CUSTOM RESOURCE
+      pomerium:
+        extraVolumes:
+        - name: qlik-simple-oidc-provider-cert
+          configMap:
+            name: qlik-simple-oidc-provider-cert
+            items:
+            - key: server.crt
+              path: ca-certificates.crt
+        - name: kube-root-ca-cert
+          configMap:
+            name: kube-root-ca.crt
+            items:
+            - key: ca.crt
+              path: kube-root-ca.crt
+        extraVolumeMounts:
+        - name: qlik-simple-oidc-provider-cert
+          mountPath: /etc/ssl/certs/ca-certificates.crt
+          subPath: ca-certificates.crt
+        - name: kube-root-ca-cert
+          mountPath: /etc/ssl/certs/kube-root-ca.crt
+          subPath: kube-root-ca.crt
+        authenticate:
+          idp:
+            provider: oidc
+            url: https://a44fdf4ca95f240c6be96ddcf39768d2-1922864766.us-west-2.elb.amazonaws.com:48000
+
+            # the credentials this SDM instance connect to Simple OIDC provider, these credential must be added to Simple OIDC provider config as well
+            # if multiple SDM UI intsances share the same Simple OIDC provider than each SDM instance must have it's own clientID/clientSecret pair
+            clientID: foo1
+            clientSecret: bar1
+        config:
+          extraOpts:
+            routes:
+            - policy:
+                - allow:
+                    or:
+                      - domain:
+                          is: example.org
+              timeout: 30s
+  zookeeperOperator:
+    enabled: true
+    namespace: zookeeper

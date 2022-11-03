@@ -1,0 +1,21 @@
+apiVersion: graphql.cisco.com/v1
+kind: FederationGateway
+metadata:
+  labels:
+    app.kubernetes.io/component: application
+    app.kubernetes.io/instance: smm
+    app.kubernetes.io/managed-by: Tiller
+    app.kubernetes.io/name: smm
+    app.kubernetes.io/part-of: smm
+    app.kubernetes.io/version: v0.0.1
+    helm.sh/chart: smm-0.0.1
+  name: smm-federation-gateway
+  namespace: smm-system
+spec:
+  image:
+    pullPolicy: Always
+    repository: registry.eticloud.io/smm/smm-federation-gateway
+    tag: v1.11.0-snapshot.202210101645
+  selector:
+    matchLabels:
+      graphql.cisco.com/federation: smm

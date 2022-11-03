@@ -1,0 +1,552 @@
+apiVersion: kafka.banzaicloud.io/v1beta1
+kind: KafkaCluster
+metadata:
+  labels:
+    banzaicloud.io/managed-by: supertubes
+    controller-tools.k8s.io: "1.0"
+    supertubes.banzaicloud.io/cli-version: upgrade_istio115
+  name: kafka
+  namespace: kafka
+spec:
+  brokerConfigGroups:
+    default:
+      brokerAnnotations:
+        prometheus.istio.io/merge-metrics: "false"
+      imagePullSecrets:
+      - name: registry-creds
+      - name: smm-pull-secret
+      initContainers:
+      - args:
+        - -c
+        - cp -r ${JAR_PATH}/* /opt/cisco/kafka/lib/authn-javaagent-libs
+        command:
+        - /bin/sh
+        image: 033498657557.dkr.ecr.us-east-2.amazonaws.com/banzaicloud/kafka-authn-agent:3.1.0-1.0
+        name: authn-javaagent-libs-loader
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - mountPath: /opt/cisco/kafka/lib/authn-javaagent-libs
+          name: authn-javaagent-libs
+      serviceAccountName: kafka-cluster
+      storageConfigs:
+      - mountPath: /kafka-logs
+        pvcSpec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+      terminationGracePeriodSeconds: 120
+      volumeMounts:
+      - mountPath: /opt/cisco/kafka/lib/authn-javaagent-libs
+        name: authn-javaagent-libs
+      volumes:
+      - emptyDir: {}
+        name: authn-javaagent-libs
+  brokers:
+  - brokerConfig:
+      brokerAnnotations:
+        sidecar.istio.io/userVolumeMount: '[{"name":"exitfile","readOnly":true,"mountPath":"/var/run/wait"}]'
+      envs:
+      - name: CLASSPATH+
+        value: :/opt/cisco/kafka/lib/authn-javaagent-libs/*
+      - name: KAFKA_OPTS+
+        value: ' -javaagent:/opt/cisco/kafka/lib/authn-javaagent-libs/agent.jar'
+      - name: KAFKA_OPTS+
+        value: ' --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED'
+      terminationGracePeriodSeconds: 120
+    brokerConfigGroup: default
+    id: 0
+  - brokerConfig:
+      brokerAnnotations:
+        sidecar.istio.io/userVolumeMount: '[{"name":"exitfile","readOnly":true,"mountPath":"/var/run/wait"}]'
+      envs:
+      - name: CLASSPATH+
+        value: :/opt/cisco/kafka/lib/authn-javaagent-libs/*
+      - name: KAFKA_OPTS+
+        value: ' -javaagent:/opt/cisco/kafka/lib/authn-javaagent-libs/agent.jar'
+      - name: KAFKA_OPTS+
+        value: ' --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED'
+      terminationGracePeriodSeconds: 120
+    brokerConfigGroup: default
+    id: 1
+  clusterImage: ghcr.io/banzaicloud/kafka:2.13-3.1.0
+  cruiseControlConfig:
+    clusterConfig: |
+      {
+        "min.insync.replicas": 1
+      }
+    config: |
+      metadata.max.age.ms=60000
+      client.id=kafka-cruise-control
+      send.buffer.bytes=131072
+      receive.buffer.bytes=131072
+      connections.max.idle.ms=540000
+      reconnect.backoff.ms=50
+      request.timeout.ms=30000
+      logdir.response.timeout.ms=10000
+      num.metric.fetchers=1
+      metric.sampler.class=com.linkedin.kafka.cruisecontrol.monitor.sampling.CruiseControlMetricsReporterSampler
+      sampling.allow.cpu.capacity.estimation=true
+      metric.reporter.topic=__CruiseControlMetrics
+      sample.store.class=com.linkedin.kafka.cruisecontrol.monitor.sampling.KafkaSampleStore
+      partition.metric.sample.store.topic=__KafkaCruiseControlPartitionMetricSamples
+      broker.metric.sample.store.topic=__KafkaCruiseControlModelTrainingSamples
+      sample.store.topic.replication.factor=2
+      num.sample.loading.threads=8
+      metric.sampler.partition.assignor.class=com.linkedin.kafka.cruisecontrol.monitor.sampling.DefaultMetricSamplerPartitionAssignor
+      metric.sampling.interval.ms=120000
+      partition.metrics.window.ms=300000
+      num.partition.metrics.windows=12
+      min.samples.per.partition.metrics.window=1
+      broker.metrics.window.ms=300000
+      num.broker.metrics.windows=20
+      min.samples.per.broker.metrics.window=1
+      capacity.config.file=config/capacity.json
+      prometheus.server.endpoint=http://localhost:9090
+      prometheus.query.resolution.step.ms=60000
+      prometheus.query.supplier=com.linkedin.kafka.cruisecontrol.monitor.sampling.prometheus.DefaultPrometheusQuerySupplier
+      default.goals=com.linkedin.kafka.cruisecontrol.analyzer.goals.RackAwareDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.ReplicaCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.DiskCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkInboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkOutboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.CpuCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.ReplicaDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.PotentialNwOutGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.DiskUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkInboundUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkOutboundUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.CpuUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.TopicReplicaDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.LeaderReplicaDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.LeaderBytesInDistributionGoal
+      goals=com.linkedin.kafka.cruisecontrol.analyzer.goals.RackAwareGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.RackAwareDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.ReplicaCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.DiskCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkInboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkOutboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.CpuCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.ReplicaDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.PotentialNwOutGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.DiskUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkInboundUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkOutboundUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.CpuUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.TopicReplicaDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.LeaderReplicaDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.LeaderBytesInDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.kafkaassigner.KafkaAssignerDiskUsageDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.kafkaassigner.KafkaAssignerEvenRackAwareGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.PreferredLeaderElectionGoal
+      intra.broker.goals=com.linkedin.kafka.cruisecontrol.analyzer.goals.IntraBrokerDiskCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.IntraBrokerDiskUsageDistributionGoal
+      hard.goals=com.linkedin.kafka.cruisecontrol.analyzer.goals.RackAwareDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.ReplicaCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.DiskCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkInboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkOutboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.CpuCapacityGoal
+      min.valid.partition.ratio=0.95
+      cpu.balance.threshold=1.1
+      disk.balance.threshold=1.1
+      network.inbound.balance.threshold=1.1
+      network.outbound.balance.threshold=1.1
+      replica.count.balance.threshold=1.1
+      cpu.capacity.threshold=0.7
+      disk.capacity.threshold=0.8
+      network.inbound.capacity.threshold=0.8
+      network.outbound.capacity.threshold=0.8
+      cpu.low.utilization.threshold=0.15
+      disk.low.utilization.threshold=0.15
+      network.inbound.low.utilization.threshold=0.15
+      network.outbound.low.utilization.threshold=0.15
+      metric.anomaly.percentile.upper.threshold=90.0
+      metric.anomaly.percentile.lower.threshold=10.0
+      proposal.expiration.ms=60000
+      max.replicas.per.broker=10000
+      num.proposal.precompute.threads=1
+      topics.excluded.from.partition.movement=
+      leader.replica.count.balance.threshold=1.1
+      topic.replica.count.balance.threshold=3.0
+      goal.balancedness.priority.weight=1.1
+      goal.balancedness.strictness.weight=1.5
+      default.replica.movement.strategies=com.linkedin.kafka.cruisecontrol.executor.strategy.BaseReplicaMovementStrategy
+      topic.replica.count.balance.min.gap=2
+      topic.replica.count.balance.max.gap=40
+      maintenance.event.class=com.linkedin.kafka.cruisecontrol.detector.MaintenanceEvent
+      maintenance.event.reader.class=com.linkedin.kafka.cruisecontrol.detector.NoopMaintenanceEventReader
+      maintenance.event.enable.idempotence=true
+      maintenance.event.idempotence.retention.ms=180000
+      maintenance.event.max.idempotence.cache.size=25
+      maintenance.event.stop.ongoing.execution=true
+      zookeeper.security.enabled=false
+      num.concurrent.partition.movements.per.broker=10
+      num.concurrent.intra.broker.partition.movements=2
+      num.concurrent.leader.movements=1000
+      execution.progress.check.interval.ms=10000
+      anomaly.notifier.class=com.linkedin.kafka.cruisecontrol.detector.notifier.SelfHealingNotifier
+      metric.anomaly.finder.class=com.linkedin.kafka.cruisecontrol.detector.KafkaMetricAnomalyFinder
+      anomaly.detection.interval.ms=300000
+      goal.violation.detection.interval.ms=300000
+      metric.anomaly.detection.interval.ms=300000
+      disk.failure.detection.interval.ms=300000
+      topic.anomaly.detection.interval.ms=300000
+      anomaly.detection.goals=com.linkedin.kafka.cruisecontrol.analyzer.goals.RackAwareDistributionGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.ReplicaCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.DiskCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkInboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.NetworkOutboundCapacityGoal,com.linkedin.kafka.cruisecontrol.analyzer.goals.CpuCapacityGoal
+      metric.anomaly.analyzer.metrics=BROKER_PRODUCE_LOCAL_TIME_MS_50TH,BROKER_PRODUCE_LOCAL_TIME_MS_999TH,BROKER_CONSUMER_FETCH_LOCAL_TIME_MS_50TH,BROKER_CONSUMER_FETCH_LOCAL_TIME_MS_999TH,BROKER_FOLLOWER_FETCH_LOCAL_TIME_MS_50TH,BROKER_FOLLOWER_FETCH_LOCAL_TIME_MS_999TH,BROKER_LOG_FLUSH_TIME_MS_50TH,BROKER_LOG_FLUSH_TIME_MS_999TH
+      broker.failure.exclude.recently.demoted.brokers=true
+      broker.failure.exclude.recently.removed.brokers=true
+      goal.violation.exclude.recently.demoted.brokers=true
+      goal.violation.exclude.recently.removed.brokers=true
+      failed.brokers.zk.path=/CruiseControlBrokerList
+      topic.config.provider.class=com.linkedin.kafka.cruisecontrol.config.KafkaTopicConfigProvider
+      cluster.configs.file=config/clusterConfigs.json
+      completed.kafka.monitor.user.task.retention.time.ms=86400000
+      completed.cruise.control.monitor.user.task.retention.time.ms=86400000
+      completed.kafka.admin.user.task.retention.time.ms=604800000
+      completed.cruise.control.admin.user.task.retention.time.ms=604800000
+      completed.user.task.retention.time.ms=86400000
+      demotion.history.retention.time.ms=1209600000
+      removal.history.retention.time.ms=1209600000
+      max.cached.completed.kafka.monitor.user.tasks=20
+      max.cached.completed.cruise.control.monitor.user.tasks=20
+      max.cached.completed.kafka.admin.user.tasks=30
+      max.cached.completed.cruise.control.admin.user.tasks=30
+      max.cached.completed.user.tasks=100
+      max.active.user.tasks=25
+      self.healing.enabled=true
+      self.healing.broker.failure.enabled=true
+      self.healing.goal.violation.enabled=true
+      self.healing.metric.anomaly.enabled=true
+      self.healing.disk.failure.enabled=true
+      self.healing.topic.anomaly.enabled=false
+      self.healing.exclude.recently.demoted.brokers=true
+      self.healing.exclude.recently.removed.brokers=true
+      topic.anomaly.finder.class=com.linkedin.kafka.cruisecontrol.detector.NoopTopicAnomalyFinder
+      self.healing.maintenance.event.enabled=true
+      goal.violation.distribution.threshold.multiplier=1.0
+      self.healing.target.topic.replication.factor=1
+      topic.excluded.from.replication.factor.check=
+      topic.replication.topic.anomaly.class=com.linkedin.kafka.cruisecontrol.detector.TopicReplicationFactorAnomaly
+      topic.replication.factor.margin=1
+      topic.min.isr.record.retention.time.ms=43200000
+      webserver.http.port=9090
+      webserver.http.address=0.0.0.0
+      webserver.http.cors.enabled=false
+      webserver.http.cors.origin=http://localhost:8080/
+      webserver.http.cors.allowmethods=OPTIONS,GET,POST
+      webserver.http.cors.exposeheaders=User-Task-ID
+      webserver.api.urlprefix=/kafkacruisecontrol/*
+      webserver.ui.diskpath=./cruise-control-ui/dist/
+      webserver.ui.urlprefix=/*
+      webserver.request.maxBlockTimeMs=10000
+      webserver.session.maxExpiryTimeMs=60000
+      webserver.session.path=/
+      webserver.accesslog.enabled=true
+      webserver.accesslog.path=access.log
+      webserver.accesslog.retention.days=14
+      two.step.verification.enabled=false
+      two.step.purgatory.retention.time.ms=1209600000
+      two.step.purgatory.max.requests=25
+      broker.capacity.config.resolver.class=com.cisco.cruisecontrol.config.BrokerCapacityConfigDynamicFileResolver
+    cruiseControlAnnotations:
+      cruise-control.banzaicloud.com/broker-capacity-config: dynamic
+    cruiseControlTaskSpec:
+      RetryDurationMinutes: 0
+    image: ghcr.io/banzaicloud/cruise-control:2.5.86
+    imagePullSecrets:
+    - name: registry-creds
+    - name: smm-pull-secret
+    initContainers:
+    - args:
+      - -c
+      - cp -r ${CRUISE_CONTROL_LIBS}/* /var/lib/cruise-control-ext-libs
+      command:
+      - /bin/sh
+      image: 033498657557.dkr.ecr.us-east-2.amazonaws.com/banzaicloud/cruisecontrol-modules:2.5.86-1.0
+      imagePullPolicy: IfNotPresent
+      name: external-libs-loader
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+      volumeMounts:
+      - mountPath: /var/lib/cruise-control-ext-libs
+        name: external-libs
+    serviceAccountName: kafka-cluster
+    volumeMounts:
+    - mountPath: /var/lib/cruise-control-ext-libs
+      name: external-libs
+    volumes:
+    - emptyDir: {}
+      name: external-libs
+  disruptionBudget: {}
+  envoyConfig: {}
+  headlessServiceEnabled: false
+  ingressController: istioingress
+  istioControlPlane:
+    name: sdm-icp-v115x
+    namespace: istio-system
+  istioIngressConfig:
+    gatewayConfig:
+      mode: ISTIO_MUTUAL
+  listenersConfig:
+    internalListeners:
+    - containerPort: 29092
+      name: internal
+      type: plaintext
+      usedForInnerBrokerCommunication: true
+    - containerPort: 29093
+      name: controller
+      type: plaintext
+      usedForControllerCommunication: true
+      usedForInnerBrokerCommunication: false
+  monitoringConfig:
+    jmxImage: ghcr.io/banzaicloud/jmx-javaagent:0.16.1
+    kafkaJMXExporterConfig: |
+      lowercaseOutputName: true
+      lowercaseOutputLabelNames: true
+      ssl: false
+      whitelistObjectNames:
+      # kafka.cluster
+      - kafka.cluster:type=Partition,name=UnderMinIsr,*
+      - kafka.cluster:type=Partition,name=UnderReplicated,*
+      # kafka.controller
+      - kafka.controller:type=ControllerChannelManager,name=QueueSize,*
+      - kafka.controller:type=ControllerChannelManager,name=TotalQueueSize
+      - kafka.controller:type=ControllerStats,*
+      - kafka.controller:type=KafkaController,*
+      # kafka.log
+      - kafka.log:type=Log,name=LogEndOffset,*
+      - kafka.log:type=Log,name=LogStartOffset,*
+      - kafka.log:type=Log,name=Size,*
+      - kafka.log:type=LogManager,*
+      # kafka.network
+      - kafka.network:type=Processor,name=IdlePercent,*
+      - kafka.network:type=RequestChannel,name=RequestQueueSize
+      - kafka.network:type=RequestChannel,name=ResponseQueueSize,*
+      - kafka.network:type=RequestMetrics,name=ErrorsPerSec,*
+      - kafka.network:type=RequestMetrics,name=RequestsPerSec,*
+      - kafka.network:type=RequestMetrics,name=LocalTimeMs,request=Produce
+      - kafka.network:type=RequestMetrics,name=LocalTimeMs,request=FetchConsumer
+      - kafka.network:type=RequestMetrics,name=LocalTimeMs,request=FetchFollower
+      - kafka.network:type=RequestMetrics,name=RemoteTimeMs,request=Produce
+      - kafka.network:type=RequestMetrics,name=RemoteTimeMs,request=FetchConsumer
+      - kafka.network:type=RequestMetrics,name=RemoteTimeMs,request=FetchFollower
+      - kafka.network:type=RequestMetrics,name=RequestQueueTimeMs,request=Produce
+      - kafka.network:type=RequestMetrics,name=RequestQueueTimeMs,request=FetchConsumer
+      - kafka.network:type=RequestMetrics,name=RequestQueueTimeMs,request=FetchFollower
+      - kafka.network:type=RequestMetrics,name=ResponseQueueTimeMs,request=Produce
+      - kafka.network:type=RequestMetrics,name=ResponseQueueTimeMs,request=FetchConsumer
+      - kafka.network:type=RequestMetrics,name=ResponseQueueTimeMs,request=FetchFollower
+      - kafka.network:type=RequestMetrics,name=ResponseSendTimeMs,request=Produce
+      - kafka.network:type=RequestMetrics,name=ResponseSendTimeMs,request=FetchConsumer
+      - kafka.network:type=RequestMetrics,name=ResponseSendTimeMs,request=FetchFollower
+      - kafka.network:type=RequestMetrics,name=TotalTimeMs,request=Produce
+      - kafka.network:type=RequestMetrics,name=TotalTimeMs,request=FetchConsumer
+      - kafka.network:type=RequestMetrics,name=TotalTimeMs,request=FetchFollower
+      - kafka.network:type=SocketServer,name=NetworkProcessorAvgIdlePercent
+      # kafka.server
+      - kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec,*
+      - kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec,*
+      - kafka.server:type=BrokerTopicMetrics,name=FailedFetchRequestsPerSec
+      - kafka.server:type=BrokerTopicMetrics,name=FailedProduceRequestsPerSec
+      - kafka.server:type=BrokerTopicMetrics,name=MessagesInPerSec,*
+      - kafka.server:type=BrokerTopicMetrics,name=ReassignmentBytesInPerSec
+      - kafka.server:type=BrokerTopicMetrics,name=ReassignmentBytesOutPerSec
+      - kafka.server:type=BrokerTopicMetrics,name=ReplicationBytesInPerSec
+      - kafka.server:type=BrokerTopicMetrics,name=ReplicationBytesOutPerSec
+      - kafka.server:type=BrokerTopicMetrics,name=TotalFetchRequestsPerSec,*
+      - kafka.server:type=BrokerTopicMetrics,name=TotalProduceRequestsPerSec,*
+      - kafka.server:type=BrokerTopicMetrics,name=FetchMessageConversionsPerSec
+      - kafka.server:type=BrokerTopicMetrics,name=ProduceMessageConversionsPerSec
+      - kafka.server:type=DelayedOperationPurgatory,*
+      - kafka.server:type=FetcherLagMetrics,name=ConsumerLag,*
+      - kafka.server:type=FetcherStats,name=BytesPerSec,*
+      - kafka.server:type=KafkaRequestHandlerPool,*
+      - kafka.server:type=KafkaServer,name=BrokerState
+      - kafka.server:type=Fetch
+      - kafka.server:type=Produce
+      - kafka.server:type=Request
+      - kafka.server:type=app-info,*
+      - kafka.server:type=ReplicaFetcherManager,*
+      - kafka.server:type=ReplicaManager,*
+      - kafka.server:type=SessionExpireListener,*
+      - kafka.server:type=ZooKeeperClientMetrics,name=ZooKeeperRequestLatencyMs
+      - kafka.server:type=socket-server-metrics,listener=*,*
+      # java
+      - java.lang:type=*
+      - java.nio:*
+      rules:
+      # kafka.cluster
+      - pattern: kafka.cluster<type=(Partition), name=(UnderMinIsr|UnderReplicated), topic=([-.\w]+), partition=(\d+)><>(Value)
+        name: kafka_controller_$1_$2_$5
+        type: GAUGE
+        labels:
+          topic: $3
+          partition: $4
+        cache: true
+      # kafka.controller
+      - pattern: kafka.controller<type=(ControllerChannelManager), name=(QueueSize), broker-id=(\d+)><>(Value)
+        name: kafka_controller_$1_$2_$4
+        type: GAUGE
+        labels:
+          broker_id: $3
+        cache: true
+      - pattern: kafka.controller<type=(ControllerChannelManager), name=(TotalQueueSize)><>(Value)
+        name: kafka_controller_$1_$2_$3
+        type: GAUGE
+        cache: true
+      - pattern: kafka.controller<type=(ControllerStats), name=([-.\w]+)><>(Count)
+        name: kafka_controller_$1_$2_$3
+        type: COUNTER
+        cache: true
+      - pattern: kafka.controller<type=(KafkaController), name=([-.\w]+)><>(Value)
+        name: kafka_controller_$1_$2_$3
+        type: GAUGE
+        cache: true
+      # kafka.log
+      - pattern: kafka.log<type=Log, name=(LogEndOffset|LogStartOffset|Size), topic=([-.\w]+), partition=(\d+)><>(Value)
+        name: kafka_log_$1_$4
+        type: GAUGE
+        labels:
+          topic: $2
+          partition: $3
+        cache: true
+      - pattern: kafka.log<type=(LogManager), name=(LogDirectoryOffline), logDirectory="(.+)"><>(Value)
+        name: kafka_log_$1_$2_$4
+        labels:
+          log_directory: $3
+        type: GAUGE
+        cache: true
+      - pattern: kafka.log<type=(LogManager), name=(OfflineLogDirectoryCount)><>(Value)
+        name: kafka_log_$1_$2_$3
+        type: GAUGE
+        cache: true
+      # kafka.network
+      - pattern : kafka.network<type=(Processor), name=(IdlePercent), networkProcessor=(\d+)><>(Value)
+        name: kafka_network_$1_$2_$4
+        labels:
+          network_processor: $3
+        type: GAUGE
+        cache: true
+      - pattern: kafka.network<type=(RequestChannel), name=(RequestQueueSize)><>(Value)
+        name: kafka_network_$1_$2_$3
+        type: GAUGE
+        cache: true
+      - pattern : kafka.network<type=(RequestChannel), name=(ResponseQueueSize), processor=(\d+)><>(Value)
+        name: kafka_network_$1_$2_$4
+        type: GAUGE
+        labels:
+          processor: $3
+        cache: true
+      - pattern : kafka.network<type=(RequestMetrics), name=(ErrorsPerSec), request=(\w+), error=(\w+)><>(Count)
+        name: kafka_network_$1_$2_$5
+        type: COUNTER
+        labels:
+          request: $3
+          error: $4
+        cache: true
+      - pattern : kafka.network<type=(RequestMetrics), name=(RequestsPerSec), request=(\w+), version=(\d+)><>(Count)
+        name: kafka_network_$1_$2_$5
+        type: COUNTER
+        labels:
+          request: $3
+          version: $4
+        cache: true
+      - pattern : kafka.network<type=(RequestMetrics), name=(\w+TimeMs), request=(\w+)><>(Count)
+        name: kafka_network_$1_$2_$4
+        type: COUNTER
+        labels:
+          request: $3
+        cache: true
+      - pattern : kafka.network<type=(SocketServer), name=(NetworkProcessorAvgIdlePercent)><>(Value)
+        name: kafka_network_$1_$2_$3
+        type: GAUGE
+        cache: true
+      # kafka.server
+      - pattern: kafka.server<type=(BrokerTopicMetrics), name=(\w+PerSec), topic=([-.\w]+)><>(Count)
+        name: kafka_server_$1_$2_$4
+        type: COUNTER
+        labels:
+          topic: $3
+        cache: true
+      - pattern: kafka.server<type=(BrokerTopicMetrics), name=(\w+PerSec)><>(Count)
+        name: kafka_server_$1_$2_total_$3
+        type: COUNTER
+        cache: true
+      - pattern: kafka.server<type=(DelayedOperationPurgatory), name=(\w+), delayedOperation=(\w+)><>(Value)
+        name: kafka_server_$1_$2_$4
+        type: GAUGE
+        labels:
+          delayed_operation: $3
+        cache: true
+      - pattern: kafka.server<type=(FetcherLagMetrics), name=(ConsumerLag), clientId=([-.\w]+), topic=([-.\w]+), partition=(\d+)><>(Value)
+        name: kafka_server_$1_$2_$6
+        type: GAUGE
+        labels:
+          client_id: $3
+          topic: $4
+          partition: $5
+        cache: true
+      - pattern: kafka.server<type=(FetcherStats), name=(\w+PerSec), clientId=([-.\w]+), brokerHost=([-.\w]+), brokerPort=(\d+)><>(Count)
+        name: kafka_server_$1_$2_$6
+        type: COUNTER
+        labels:
+          client_id: $3
+          broker_host: $4
+          broker_port: $5
+        cache: true
+      - pattern: kafka.server<type=(KafkaRequestHandlerPool), name=(\w+)><>(Count)
+        name: kafka_server_$1_$2_$3
+        type: COUNTER
+        cache: true
+      - pattern: kafka.server<type=(KafkaRequestHandlerPool), name=(\w+)><>(OneMinuteRate)
+        name: kafka_server_$1_$2_$3
+        type: GAUGE
+        cache: true
+      - pattern: kafka.server<type=(KafkaServer), name=(\w+)><>(Value)
+        name: kafka_server_$1_$2_$3
+        type: GAUGE
+        cache: true
+      - pattern: kafka.server<type=(Fetch|Produce|Request)><>(queue-size)
+        name: kafka_server_$1_$2
+        type: GAUGE
+        cache: true
+      - pattern: kafka.server<type=(app-info), id=(\d+)><>(StartTimeMs)
+        name: kafka_server_$1_$3
+        type: COUNTER
+        labels:
+          broker_id: $2
+        cache: true
+      - pattern: 'kafka.server<type=(app-info), id=(\d+)><>(Version): ([-.~+\w\d]+)'
+        name: kafka_server_$1_$3
+        type: COUNTER
+        labels:
+          broker_id: $2
+          version: $4
+        value: 1.0
+        cache: false
+      - pattern: kafka.server<type=(ReplicaFetcherManager), name=(\w+), clientId=([-.\w]+)><>(Value)
+        name: kafka_server_$1_$2_$4
+        type: GAUGE
+        labels:
+          client_id: $3
+        cache: true
+      - pattern: kafka.server<type=(ReplicaManager), name=(\w+)><>(Value)
+        name: kafka_server_$1_$2_$3
+        cache: true
+      - pattern: kafka.server<type=(ReplicaManager), name=(\w+)><>(Count)
+        name: kafka_server_$1_$2_$3
+        type: COUNTER
+        cache: true
+      - pattern: kafka.server<type=(SessionExpireListener), name=(\w+)><>(Value)
+        name: kafka_server_$1_$2_$3
+        type: GAUGE
+        cache: true
+      - pattern: kafka.server<type=(SessionExpireListener), name=(\w+)><>(Count)
+        name: kafka_server_$1_$2_$3
+        type: COUNTER
+        cache: true
+      - pattern: kafka.server<type=(ZooKeeperClientMetrics), name=(\w+)><>(\d+)thPercentile
+        name: kafka_server_$1_$2
+        type: GAUGE
+        labels:
+          quantile: 0.$3
+        cache: true
+      - pattern: kafka.server<type=(ZooKeeperClientMetrics), name=(\w+)><>(Mean|Max|StdDev)
+        name: kafka_server_$1_$2_$3
+        type: GAUGE
+        cache: true
+      - pattern: kafka.server<type=(socket-server-metrics), listener=([-.\w]+), networkProcessor=(\d+)><>([-\w]+(?:-count|-rate))
+        name: kafka_server_$1_$4
+        type: GAUGE
+        labels:
+          listener: $2
+          network_processor: $3
+        cache: true
+      # Export all other java.{lang,nio}* beans using default format
+      - pattern: java.lang.+
+        cache: true
+      - pattern: java.nio.+
+        cache: true
+    pathToJar: /jmx_prometheus_javaagent.jar
+  oneBrokerPerNode: false
+  readOnlyConfig: |
+    auto.create.topics.enable=false
+    offsets.topic.replication.factor=2
+    cruise.control.metrics.topic.auto.create=true
+    cruise.control.metrics.topic.num.partitions=12
+    cruise.control.metrics.topic.replication.factor=2
+    cruise.control.metrics.topic.min.insync.replicas=1
+  rollingUpgradeConfig:
+    failureThreshold: 1
+  zkAddresses:
+  - zookeeper-server-client.zookeeper:2181
+  

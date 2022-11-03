@@ -1,0 +1,72 @@
+apiVersion: supertubes.banzaicloud.io/v1beta1
+kind: ApplicationManifest
+metadata:
+  name: applicationmanifest
+  namespace: default
+spec:
+  clusterRegistry:
+    enabled: false
+    namespace: cluster-registry
+  controllerSettings: {}
+  csrOperator:
+    enabled: true
+    namespace: csr-operator-system
+  imagePullSecretsOperator:
+    enabled: true
+    namespace: supertubes-system
+  istioOperator:
+    enabled: true
+    namespace: istio-system
+  kafkaMinion: {}
+  kafkaOperator:
+    enabled: true
+    namespace: kafka
+  monitoring:
+    grafanaDashboards:
+      label: app.kubernetes.io/supertubes_managed_grafana_dashboard
+    prometheusOperator:
+      enabled: false
+      namespace: supertubes-system
+  supertubes:
+    enabled: true
+    namespace: supertubes-system
+    valuesOverride: |-
+      ingress:
+        istio:
+          create: true
+          meshgateway:
+            istioControlPlane:
+              namespace: istio-system
+              name: sdm-icp-v113x
+      pomerium:
+        extraVolumes:
+        - name: qlik-simple-oidc-provider-cert
+          configMap:
+            name: qlik-simple-oidc-provider-cert
+            items:
+            - key: server.crt
+              path: ca-certificates.crt
+        extraVolumeMounts:
+        - name: qlik-simple-oidc-provider-cert
+          mountPath: /etc/ssl/certs/
+        authenticate:
+          idp:
+            provider: oidc
+            url: https://aec4ab9a7b6834befa351751e71c8f27-216371783.us-west-2.elb.amazonaws.com:48000
+
+            # the credentials this SDM instance connect to Simple OIDC provider, these credential must be added to Simple OIDC provider config as well
+            # if multiple SDM UI intsances share the same Simple OIDC provider than each SDM instance must have it's own clientID/clientSecret pair
+            clientID: foo1        
+            clientSecret: bar1
+        config:
+          extraOpts:    
+            routes:
+            - policy:
+                - allow:
+                    or:
+                      - domain:
+                          is: example.org
+              timeout: 30s
+  zookeeperOperator:
+    enabled: true
+    namespace: zookeeper

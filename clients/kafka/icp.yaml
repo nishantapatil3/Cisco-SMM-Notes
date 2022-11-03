@@ -1,0 +1,82 @@
+apiVersion: servicemesh.cisco.com/v1alpha1
+kind: IstioControlPlane
+metadata:
+  name: sdm-icp-v115x
+  namespace: istio-system
+  labels:
+    banzaicloud.io/managed-by: supertubes
+spec:
+  version: "1.15.0"
+  mode: ACTIVE
+  distribution: cisco
+  meshID: sdm
+  k8sResourceOverlays:
+  - groupVersionKind:
+      group: apps
+      kind: Deployment
+      version: v1
+    objectKey:
+      name: istiod-sdm-icp-v115x
+    patches:
+    - parseValue: true
+      path: /spec/template/spec/volumes/-
+      type: replace
+      value: |
+        name: external-ca-cert
+        secret:
+          secretName: external-ca-cert
+          optional: true        
+    - parseValue: true
+      path: /spec/template/spec/containers/name=discovery/volumeMounts/-
+      type: replace
+      value: |
+        name: external-ca-cert
+        mountPath: /etc/external-ca-cert
+        readOnly: true        
+  # Amend ClusterRole to add permission for istiod to approve certificate signing by custom signer
+  - groupVersionKind:
+      group: rbac.authorization.k8s.io
+      kind: ClusterRole
+      version: v1
+    objectKey:
+      name: istiod-sdm-icp-v115x-istio-system
+    patches:
+    - parseValue: true
+      path: /rules/-
+      type: replace
+      value: |
+        apiGroups:
+        - certificates.k8s.io
+        resourceNames:
+        - csr.banzaicloud.io/privateca
+        resources:
+        - signers
+        verbs:
+        - approve        
+  containerImageConfiguration:
+    imagePullSecrets:
+    - name: registry-creds
+    imagePullPolicy: Always
+  proxy:
+    image: 033498657557.dkr.ecr.us-east-2.amazonaws.com/banzaicloud/istio-proxyv2:v1.15.0-bzc.1-kafka.1
+  meshConfig:
+    protocolDetectionTimeout: 5s
+    enableAutoMtls: true
+    defaultConfig:
+      proxyMetadata:
+        PROXY_CONFIG_XDS_AGENT: "true"
+  telemetryV2:
+    enabled: true
+  istiod:
+    deployment:
+      image: 033498657557.dkr.ecr.us-east-2.amazonaws.com/banzaicloud/istio-pilot:v1.15.0-bzc.1
+      env:
+      # Skip validating the peer is from the same trust domain when mTLS is enabled in authentication policy
+      - name: PILOT_SKIP_VALIDATE_TRUST_DOMAIN
+        value: "true"
+      # Indicate to Istiod that we use an external signer (likely to be removed and added to mesh config - from upstream Istio)
+      - name: EXTERNAL_CA
+        value: ISTIOD_RA_KUBERNETES_API
+      # Kuberntes CA signer type (likely to be removed and added to mesh config - from upstream Istio)
+      - name: K8S_SIGNER
+        value: csr.banzaicloud.io/privateca

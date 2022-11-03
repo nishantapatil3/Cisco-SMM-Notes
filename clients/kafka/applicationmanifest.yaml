@@ -1,0 +1,37 @@
+apiVersion: supertubes.banzaicloud.io/v1beta1
+kind: ApplicationManifest
+metadata:
+  name: applicationmanifest
+  namespace: default
+spec:
+  clusterRegistry:
+    enabled: false
+    namespace: cluster-registry
+  controllerSettings: {}
+  csrOperator:
+    enabled: true
+    namespace: csr-operator-system
+  imagePullSecretsOperator:
+    enabled: true
+    namespace: supertubes-system
+  istioOperator:
+    enabled: true
+    namespace: istio-system
+  kafkaMinion:
+    enabled: false
+  kafkaOperator:
+    enabled: true
+    namespace: kafka
+  monitoring:
+    grafanaDashboards:
+      enabled: false
+      label: app.kubernetes.io/supertubes_managed_grafana_dashboard
+    prometheusOperator:
+      enabled: false
+      namespace: supertubes-system
+  supertubes:
+    enabled: true
+    namespace: supertubes-system
+  zookeeperOperator:
+    enabled: true
+    namespace: zookeeper

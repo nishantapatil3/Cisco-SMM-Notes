@@ -1,0 +1,120 @@
+apiVersion: zookeeper.pravega.io/v1beta1
+kind: ZookeeperCluster
+metadata:
+  labels:
+    app: zookeeper-server
+    app.kubernetes.io/component: zookeeper
+    app.kubernetes.io/instance: zookeeper-server
+    banzaicloud.io/managed-by: supertubes
+    supertubes.banzaicloud.io/cli-version: upgrade_istio115
+  name: zookeeper-server
+  namespace: zookeeper
+spec:
+  adminServerService: {}
+  clientService: {}
+  config:
+    autoPurgePurgeInterval: 1
+    autoPurgeSnapRetainCount: 3
+    commitLogCount: 500
+    globalOutstandingLimit: 1000
+    initLimit: 10
+    maxClientCnxns: 60
+    maxSessionTimeout: 40000
+    minSessionTimeout: 4000
+    preAllocSize: 65536
+    quorumListenOnAllIPs: true
+    snapCount: 10000
+    snapSizeLimitInKb: 4194304
+    syncLimit: 5
+    tickTime: 2000
+  headlessService: {}
+  image:
+    pullPolicy: IfNotPresent
+    repository: pravega/zookeeper
+    tag: 0.2.13
+  labels:
+    app: zookeeper-server
+    release: zookeeper-server
+  persistence:
+    reclaimPolicy: Delete
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+  pod:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - zookeeper-server
+              - key: kind
+                operator: In
+                values:
+                - ZookeeperMember
+            topologyKey: kubernetes.io/hostname
+          weight: 50
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - zookeeper-server
+              - key: kind
+                operator: In
+                values:
+                - ZookeeperMember
+            topologyKey: failure-domain.beta.kubernetes.io/zone
+          weight: 20
+    env:
+    - name: ZK_SERVER_HEAP
+      value: "1024"
+    - name: SERVER_JVMFLAGS
+      value: -Xms512m
+    labels:
+      app: zookeeper-server
+      release: zookeeper-server
+    resources:
+      limits:
+        cpu: 1500m
+        memory: 1536Mi
+      requests:
+        cpu: "1"
+        memory: 1536Mi
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+  ports:
+  - containerPort: 2181
+    name: client
+  - containerPort: 2888
+    name: quorum
+  - containerPort: 3888
+    name: leader-election
+  - containerPort: 7000
+    name: metrics
+  - containerPort: 8080
+    name: admin-server
+  probes:
+    livenessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      successThreshold: 0
+      timeoutSeconds: 10
+    readinessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 10
+  replicas: 1
+  storageType: persistence
+  persistence:
+    reclaimPolicy: Delete

@@ -1,0 +1,61 @@
+apiVersion: zookeeper.pravega.io/v1beta1
+kind: ZookeeperCluster
+metadata:
+  name: zookeeper-server
+  labels:
+    app: zookeeper-server
+    app.kubernetes.io/component: zookeeper
+    app.kubernetes.io/instance: zookeeper-server
+spec:
+  image:
+    repository: pravega/zookeeper
+    tag: 0.2.13
+    pullPolicy: IfNotPresent
+  replicas: 3
+  pod:
+    resources:
+      requests:
+        cpu: 1
+        memory: "1.5Gi"
+      limits:
+        cpu: "1500m"
+        memory: "1.5Gi"
+    env:
+      - name: ZK_SERVER_HEAP
+        value: "1024"
+      - name: SERVER_JVMFLAGS
+        value: "-Xms512m"
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - zookeeper-server
+                    - key: kind
+                      operator: In
+                      values:
+                        - ZookeeperMember
+              topologyKey: kubernetes.io/hostname
+          - weight: 20
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - zookeeper-server
+                  - key: kind
+                    operator: In
+                    values:
+                      - ZookeeperMember
+              topologyKey: failure-domain.beta.kubernetes.io/zone
+  config:
+    initLimit: 10
+    tickTime: 2000
+    syncLimit: 5
+    quorumListenOnAllIPs: true
