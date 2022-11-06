@@ -1,14 +1,13 @@
-# General
-brew install wget
-brew install watch
-
 # Work
+brew install romkatv/powerlevel10k/powerlevel10k\necho "source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme" >>~/.zshrc
 brew install gh
 brew install go
 brew install golangci-lint
-brew install romkatv/powerlevel10k/powerlevel10k\necho "source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme" >>~/.zshrc
-brew install aws
 brew install awscli
+
+# General
+brew install wget
+brew install watch
 
 # k8
 brew install kubectl
@@ -17,8 +16,6 @@ brew install helm
 brew install kind
 brew install hey
 
-# k3
-brew install k3d
-
 # Good to have
-brew install vnstat
+brew install stats
+
