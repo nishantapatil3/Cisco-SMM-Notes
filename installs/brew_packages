@@ -4,6 +4,7 @@ brew install gh
 brew install go
 brew install golangci-lint
 brew install awscli
+brew install diffutils #replaces Apple diff with unix diff
 
 # General
 brew install wget
