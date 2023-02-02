@@ -3,11 +3,12 @@ kind: ControlPlane
 metadata:
   name: smm
 spec:
+  clusterName: cluster-name-1
   certManager:
     enabled: true
     namespace: cert-manager
   clusterRegistry:
-    enabled: false
+    enabled: true
     namespace: cluster-registry
   log: {}
   meshManager:
@@ -15,7 +16,7 @@ spec:
     istio:
       enabled: true
       istioCRRef:
-        name: cp-v113x
+        name: cp-v115x
         namespace: istio-system
       operators:
         namespace: smm-system
@@ -63,7 +64,7 @@ spec:
     impersonation:
       enabled: true
     istio:
-      revision: cp-v113x.istio-system
+      revision: cp-v115x.istio-system
     leo:
       enabled: true
       log: {}
