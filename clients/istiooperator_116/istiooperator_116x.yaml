@@ -1,0 +1,24 @@
+apiVersion: smm.cisco.com/v1alpha1
+kind: IstioOperator
+metadata:
+  annotations:
+    banzaicloud.io/managed-component: smm-mesh-manager-smm.cisco.com/v1alpha1-controlplane
+    banzaicloud.io/related-to: /smm
+  name: v116x
+  namespace: smm-system
+spec:
+  enabled: true
+  image:
+    pullPolicy: Always
+    repository: nishantapatil3/istio-operator
+    tag: v2.16.1
+  imagePullSecrets:
+  - name: smm-pull-secret
+  namespace: smm-system
+  prometheusMetrics:
+    authProxy:
+      image:
+        pullPolicy: IfNotPresent
+        repository: quay.io/brancz/kube-rbac-proxy
+        tag: v0.11.0
+  version: 1.16.1

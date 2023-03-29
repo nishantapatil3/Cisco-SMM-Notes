@@ -82,6 +82,7 @@ plugins=(
     git
     docker
     zsh-autosuggestions
+    fzf
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -116,34 +117,32 @@ source $ZSH/oh-my-zsh.sh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 
-
 #########################
+# GO
 export PATH="$HOME/go/bin:$PATH"
+export PATH="/opt/homebrew/opt/go@1.18/bin:$PATH"
 
 # Example aliases
 alias python='python3'
+alias pip='pip3'
 alias k='kubectl'
-alias cdsmm='cd ~/src/smm'
-alias cdsmmcli='cd ~/src//smm/services/cli'
-alias smmcli='~/src/smm/services/cli/build/smm-cli'
 
-# AWS config
-export CECID=nispatil
-export ACCOUNTID=738304443349
-export REGION=us-west-2
-
-# kind source
-export KUBECONFIG=~/Downloads/nispatil-pke.yaml
-export CLUSTER2=~/Downloads/nispatil-gke2.yaml
-#export KUBECONFIG=~/Downloads/nispatil-gke.yaml
-#export KUBECONFIG=~/Downloads/nispatil-eks.yaml
+# fzf
+export FZF_BASE=/opt/homebrew/opt/fzf
 
 # Auto Completion
 source <(kubectl completion zsh)
 source <(k9s completion zsh)
 
-# Vault auth
-export VAULT_TOKEN=hvs.CAESIKo7NCYXe9hXT7I3yTHsVBtZ-cfkXXGnq336a0EB9E5LGiQKImh2cy5SV1JEQlZ3SWtpMTNtdkVpUVM1YlFjdnUuS1BSc1Q
-export VAULT_ADDR=https://east.keeper.cisco.com
-export VAULT_NAMESPACE=eticloud/apps/appnet
+# kind source
+export KUBECONFIG=~/Downloads/nispatil-eks.yaml
+#export KUBECONFIG=~/Downloads/nispatil-gke.yaml
+
+# nvm env
+export NVM_DIR="$HOME/.nvm"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+
+# docker
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
 

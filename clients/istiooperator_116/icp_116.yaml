@@ -1,0 +1,88 @@
+apiVersion: servicemesh.cisco.com/v1alpha1
+kind: IstioControlPlane
+metadata:
+  annotations:
+    banzaicloud.io/related-to: /smm
+    controlplane.istio.servicemesh.cisco.com/namespace-injection-source: "true"
+  labels:
+    banzaicloud.io/managed-by: smm-cli
+    smm.cisco.com/cli-version: 0.0.1
+  name: cp-v116x
+  namespace: istio-system
+spec:
+  containerImageConfiguration:
+    imagePullPolicy: Always
+    imagePullSecrets:
+    - name: smm-pull-secret
+  distribution: cisco
+  istiod:
+    deployment:
+      env:
+      - name: ISTIO_MULTIROOT_MESH
+        value: "true"
+      image: registry.eticloud.io/smm/istio-pilot:v1.16.1-bzc.0
+  k8sResourceOverlays:
+  - groupVersionKind:
+      group: apps
+      kind: Deployment
+      version: v1
+    objectKey:
+      name: istiod-cp-v116x
+      namespace: istio-system
+    patches:
+    - path: /spec/template/spec/containers/0/args/-
+      type: replace
+      value: --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256
+  meshConfig:
+    defaultConfig:
+      envoyAccessLogService:
+        address: smm-als.smm-system.svc.cluster.local:50600
+        tcpKeepalive:
+          interval: 10s
+          probes: 3
+          time: 10s
+        tlsSettings:
+          mode: ISTIO_MUTUAL
+      holdApplicationUntilProxyStarts: true
+      proxyMetadata:
+        ISTIO_META_ALS_ENABLED: "true"
+        PROXY_CONFIG_XDS_AGENT: "true"
+      tracing:
+        tlsSettings:
+          mode: ISTIO_MUTUAL
+        zipkin:
+          address: smm-zipkin.smm-system.svc.cluster.local:59411
+    enableEnvoyAccessLogService: true
+    enableTracing: true
+  meshExpansion:
+    enabled: true
+    gateway:
+      deployment:
+        podMetadata:
+          labels:
+            app: istio-meshexpansion-gateway
+            istio: meshexpansiongateway
+      service:
+        ports:
+        - name: tcp-smm-als-tls
+          port: 50600
+          protocol: TCP
+          targetPort: 50600
+        - name: tcp-smm-zipkin-tls
+          port: 59411
+          protocol: TCP
+          targetPort: 59411
+  meshID: mesh1
+  mode: ACTIVE
+  networkName: network1
+  proxy:
+    image: registry.eticloud.io/smm/istio-proxyv2:v1.16.1-bzc.0
+  proxyInit:
+    cni:
+      daemonset:
+        image: registry.eticloud.io/smm/istio-install-cni:v1.16.1-bzc.0
+    image: registry.eticloud.io/smm/istio-proxyv2:v1.16.1-bzc.0
+  sidecarInjector:
+    deployment:
+      image: registry.eticloud.io/smm/istio-sidecar-injector:v1.16.1-bzc.0
+  version: 1.16.1  
