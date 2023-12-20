@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamlit
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: streamlit-label
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: streamlit-label
+    spec:
+      containers:
+        - name: streamlit-pod
+          image: nishantapatil3/streamlit:latest
+          imagePullPolicy: Always
+          env:
+            - name: GOOGLE_API_KEY
+              value: "xxx"

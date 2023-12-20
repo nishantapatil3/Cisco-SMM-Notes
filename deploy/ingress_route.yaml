@@ -1,0 +1,38 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: streamlit-ingressroute
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`homeserver.local`) && PathPrefix(`/sl`)
+      kind: Rule
+      services:
+        - name: streamlit-svc
+          port: http
+      middlewares:
+        - name: streamlit-stripprefix
+        - name: streamlit-add-trailing-slash
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: streamlit-add-trailing-slash
+  namespace: default
+spec:
+  redirectRegex:
+    regex: "^(.*)\\/sl$"
+    replacement: "/sl/"
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: streamlit-stripprefix
+  namespace: default
+spec:
+  stripPrefix:
+    prefixes:
+      - /sl
+      - /sl/

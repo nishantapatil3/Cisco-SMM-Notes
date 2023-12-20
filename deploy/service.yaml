@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: streamlit-svc
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: streamlit-label
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
