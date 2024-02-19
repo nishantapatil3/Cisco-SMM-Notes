@@ -22,3 +22,11 @@ kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath={".data.token"
 ```
 
 Goto: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+
+## Delete
+
+```
+kubectl delete -f admin-user.yaml
+kubectl delete -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+kubectl delete -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
