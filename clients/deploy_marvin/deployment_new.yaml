@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marvin-prompt-inspection
+  namespace: vowel
+spec:
+  selector:
+    matchLabels:
+      app: marvin-prompt-inspection-label
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: marvin-prompt-inspection-label
+    spec:
+      containers:
+        - name: marvin-prompt-inspection
+          image: 626007623524.dkr.ecr.us-east-2.amazonaws.com/marvin/marvin-prompt-inspection:latest
+          #image: 626007623524.dkr.ecr.us-east-2.amazonaws.com/marvin/images/marvin-prompt-inspection/server:latest
+          imagePullPolicy: IfNotPresent

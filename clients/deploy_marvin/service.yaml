@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: marvin-prompt-inspection-svc
+  namespace: vowel
+spec:
+  type: ClusterIP
+  selector:
+    app: marvin-prompt-inspection-label
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
